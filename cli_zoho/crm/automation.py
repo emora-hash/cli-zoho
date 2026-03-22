@@ -18,6 +18,8 @@ class AutomationClient:
         if module:
             params["module"] = module
         resp = self.auth.request("GET", f"{self.base}/settings/automation/workflow_rules", params=params)
+        if resp.status_code == 204:
+            return []
         return resp.json().get("workflow_rules", [])
 
     def get_workflow(self, rule_id: str) -> dict:
@@ -84,6 +86,8 @@ class AutomationClient:
         if module:
             params["module"] = module
         resp = self.auth.request("GET", f"{self.base}/settings/automation/scoring_rules", params=params)
+        if resp.status_code == 204:
+            return []
         return resp.json().get("scoring_rules", [])
 
     def create_scoring_rule(self, data: dict) -> dict:
@@ -121,4 +125,6 @@ class AutomationClient:
         if module:
             params["module"] = module
         resp = self.auth.request("GET", f"{self.base}/settings/automation/assignment_rules", params=params)
+        if resp.status_code == 204:
+            return []
         return resp.json().get("assignment_rules", [])
