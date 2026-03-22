@@ -148,7 +148,7 @@ cli-zoho auth status
 ## Development
 
 ```bash
-git clone https://github.com/saltedmedia/cli-zoho.git
+git clone https://github.com/emora-hash/cli-zoho.git
 cd cli-zoho
 pip install -e ".[dev]"
 pytest
