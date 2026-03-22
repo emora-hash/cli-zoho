@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
-    {name = "Eduardo Mora", email = "eduardo@saltedmedia.com"},
+    {name = "Eduardo Mora", email = "edimora29@gmail.com"},
 ]
 keywords = ["zoho", "crm", "inventory", "cli", "api", "agent", "automation"]
 classifiers = [
