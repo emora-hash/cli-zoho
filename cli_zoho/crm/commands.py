@@ -191,6 +191,7 @@ from cli_zoho.crm.metadata_commands import (
 from cli_zoho.crm.settings_commands import (
     pipelines_group, variables_group, org_settings_group,
 )
+from cli_zoho.crm.functions_commands import functions_group
 
 crm_group.add_command(workflows_group)
 crm_group.add_command(blueprint_group)
@@ -202,5 +203,6 @@ crm_group.add_command(related_lists_group)
 crm_group.add_command(pipelines_group)
 crm_group.add_command(variables_group)
 crm_group.add_command(org_settings_group)
+crm_group.add_command(functions_group)
 
 
