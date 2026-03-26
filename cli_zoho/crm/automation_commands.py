@@ -5,7 +5,8 @@ import json
 import click
 
 from cli_zoho.crm.automation import AutomationClient
-from cli_zoho.shared.output import render, error_out
+from cli_zoho import config
+from cli_zoho.shared.output import render, error_out, dry_run_output
 
 
 def _client(ctx) -> AutomationClient:
@@ -48,15 +49,19 @@ def wf_get(ctx, rule_id, json_mode, quiet):
 @workflows_group.command("update", short_help="Update a workflow rule")
 @click.argument("rule_id")
 @click.option("--data", required=True, help="JSON string of workflow data")
+@click.option("--dry-run", is_flag=True, help="Show request without executing")
 @click.option("--json", "json_mode", is_flag=True, help="JSON output")
 @click.option("--quiet", is_flag=True, help="Suppress non-data output")
 @click.pass_context
-def wf_update(ctx, rule_id, data, json_mode, quiet):
+def wf_update(ctx, rule_id, data, dry_run, json_mode, quiet):
     """Update a workflow rule by ID."""
     try:
         parsed = json.loads(data)
     except json.JSONDecodeError as e:
         error_out(f"Invalid JSON: {e}")
+        return
+    if dry_run:
+        dry_run_output("PUT", f"{config.get_crm_base()}/settings/workflow_rules/{rule_id}", parsed)
         return
     client = _client(ctx)
     result = client.update_workflow(rule_id, parsed)
@@ -65,11 +70,15 @@ def wf_update(ctx, rule_id, data, json_mode, quiet):
 
 @workflows_group.command("delete", short_help="Delete a workflow rule")
 @click.argument("rule_id")
+@click.option("--dry-run", is_flag=True, help="Show request without executing")
 @click.option("--json", "json_mode", is_flag=True, help="JSON output")
 @click.option("--quiet", is_flag=True, help="Suppress non-data output")
 @click.pass_context
-def wf_delete(ctx, rule_id, json_mode, quiet):
+def wf_delete(ctx, rule_id, dry_run, json_mode, quiet):
     """Delete a workflow rule by ID."""
+    if dry_run:
+        dry_run_output("DELETE", f"{config.get_crm_base()}/settings/workflow_rules/{rule_id}")
+        return
     client = _client(ctx)
     result = client.delete_workflow(rule_id)
     render(result, json_mode=json_mode, quiet=quiet)
@@ -78,14 +87,18 @@ def wf_delete(ctx, rule_id, json_mode, quiet):
 @workflows_group.command("reorder", short_help="Reorder workflow rules")
 @click.argument("module")
 @click.option("--ids", required=True, help="Comma-separated rule IDs in desired order")
+@click.option("--dry-run", is_flag=True, help="Show request without executing")
 @click.option("--json", "json_mode", is_flag=True, help="JSON output")
 @click.option("--quiet", is_flag=True, help="Suppress non-data output")
 @click.pass_context
-def wf_reorder(ctx, module, ids, json_mode, quiet):
+def wf_reorder(ctx, module, ids, dry_run, json_mode, quiet):
     """Reorder workflow rules for a module."""
     rule_ids = [i.strip() for i in ids.split(",") if i.strip()]
     if not rule_ids:
         error_out("--ids must contain at least one rule ID")
+        return
+    if dry_run:
+        dry_run_output("PUT", f"{config.get_crm_base()}/settings/workflow_rules/actions/reorder", {"rule_ids": rule_ids})
         return
     client = _client(ctx)
     result = client.reorder_workflows(module, rule_ids)
@@ -153,15 +166,19 @@ def bp_get(ctx, module, record_id, json_mode, quiet):
 @click.argument("record_id")
 @click.option("--transition-id", required=True, help="Blueprint transition ID")
 @click.option("--data", required=True, help="JSON string of transition field data")
+@click.option("--dry-run", is_flag=True, help="Show request without executing")
 @click.option("--json", "json_mode", is_flag=True, help="JSON output")
 @click.option("--quiet", is_flag=True, help="Suppress non-data output")
 @click.pass_context
-def bp_advance(ctx, module, record_id, transition_id, data, json_mode, quiet):
+def bp_advance(ctx, module, record_id, transition_id, data, dry_run, json_mode, quiet):
     """Advance a record through a blueprint transition."""
     try:
         parsed = json.loads(data)
     except json.JSONDecodeError as e:
         error_out(f"Invalid JSON: {e}")
+        return
+    if dry_run:
+        dry_run_output("PUT", f"{config.get_crm_base()}/{module}/{record_id}/actions/blueprint", parsed)
         return
     client = _client(ctx)
     result = client.update_blueprint(module, record_id, transition_id, parsed)
@@ -191,15 +208,19 @@ def scoring_list(ctx, module, json_mode, quiet):
 
 @scoring_group.command("create", short_help="Create a scoring rule")
 @click.option("--data", required=True, help="JSON string of scoring rule data")
+@click.option("--dry-run", is_flag=True, help="Show request without executing")
 @click.option("--json", "json_mode", is_flag=True, help="JSON output")
 @click.option("--quiet", is_flag=True, help="Suppress non-data output")
 @click.pass_context
-def scoring_create(ctx, data, json_mode, quiet):
+def scoring_create(ctx, data, dry_run, json_mode, quiet):
     """Create a new scoring rule."""
     try:
         parsed = json.loads(data)
     except json.JSONDecodeError as e:
         error_out(f"Invalid JSON: {e}")
+        return
+    if dry_run:
+        dry_run_output("POST", f"{config.get_crm_base()}/settings/scoring_rules", parsed)
         return
     client = _client(ctx)
     result = client.create_scoring_rule(parsed)
@@ -209,15 +230,19 @@ def scoring_create(ctx, data, json_mode, quiet):
 @scoring_group.command("update", short_help="Update a scoring rule")
 @click.argument("rule_id")
 @click.option("--data", required=True, help="JSON string of updated data")
+@click.option("--dry-run", is_flag=True, help="Show request without executing")
 @click.option("--json", "json_mode", is_flag=True, help="JSON output")
 @click.option("--quiet", is_flag=True, help="Suppress non-data output")
 @click.pass_context
-def scoring_update(ctx, rule_id, data, json_mode, quiet):
+def scoring_update(ctx, rule_id, data, dry_run, json_mode, quiet):
     """Update a scoring rule by ID."""
     try:
         parsed = json.loads(data)
     except json.JSONDecodeError as e:
         error_out(f"Invalid JSON: {e}")
+        return
+    if dry_run:
+        dry_run_output("PUT", f"{config.get_crm_base()}/settings/scoring_rules/{rule_id}", parsed)
         return
     client = _client(ctx)
     result = client.update_scoring_rule(rule_id, parsed)
@@ -226,11 +251,15 @@ def scoring_update(ctx, rule_id, data, json_mode, quiet):
 
 @scoring_group.command("delete", short_help="Delete a scoring rule")
 @click.argument("rule_id")
+@click.option("--dry-run", is_flag=True, help="Show request without executing")
 @click.option("--json", "json_mode", is_flag=True, help="JSON output")
 @click.option("--quiet", is_flag=True, help="Suppress non-data output")
 @click.pass_context
-def scoring_delete(ctx, rule_id, json_mode, quiet):
+def scoring_delete(ctx, rule_id, dry_run, json_mode, quiet):
     """Delete a scoring rule by ID."""
+    if dry_run:
+        dry_run_output("DELETE", f"{config.get_crm_base()}/settings/scoring_rules/{rule_id}")
+        return
     client = _client(ctx)
     result = client.delete_scoring_rule(rule_id)
     render(result, json_mode=json_mode, quiet=quiet)
@@ -239,11 +268,15 @@ def scoring_delete(ctx, rule_id, json_mode, quiet):
 @scoring_group.command("execute", short_help="Execute a scoring rule")
 @click.argument("rule_id")
 @click.argument("module")
+@click.option("--dry-run", is_flag=True, help="Show request without executing")
 @click.option("--json", "json_mode", is_flag=True, help="JSON output")
 @click.option("--quiet", is_flag=True, help="Suppress non-data output")
 @click.pass_context
-def scoring_execute(ctx, rule_id, module, json_mode, quiet):
+def scoring_execute(ctx, rule_id, module, dry_run, json_mode, quiet):
     """Execute a scoring rule against a module."""
+    if dry_run:
+        dry_run_output("POST", f"{config.get_crm_base()}/settings/scoring_rules/{rule_id}/actions/execute")
+        return
     client = _client(ctx)
     result = client.execute_scoring_rule(rule_id, module)
     render(result, json_mode=json_mode, quiet=quiet)

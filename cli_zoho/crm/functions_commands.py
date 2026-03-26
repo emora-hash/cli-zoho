@@ -2,7 +2,8 @@
 import json
 import click
 from cli_zoho.crm.functions import FunctionsClient
-from cli_zoho.shared.output import render, error_out
+from cli_zoho import config
+from cli_zoho.shared.output import render, error_out, dry_run_output
 
 
 def _client(ctx) -> FunctionsClient:
@@ -22,10 +23,11 @@ def functions_group(ctx):
 @click.option("--method", default="POST", type=click.Choice(["GET", "POST"]), help="HTTP method (default: POST)")
 @click.option("--auth-type", default="apikey", type=click.Choice(["oauth", "apikey"]), help="Auth method (default: apikey)")
 @click.option("--api-key", default=None, help="Per-function API key (required for apikey auth)")
+@click.option("--dry-run", is_flag=True, help="Show request without executing")
 @click.option("--json", "json_mode", is_flag=True, help="JSON output")
 @click.option("--quiet", is_flag=True, help="Suppress non-data output")
 @click.pass_context
-def fn_execute(ctx, function_name, arguments, method, auth_type, api_key, json_mode, quiet):
+def fn_execute(ctx, function_name, arguments, method, auth_type, api_key, dry_run, json_mode, quiet):
     """Execute a standalone CRM function by API name."""
     parsed_args = None
     if arguments:
@@ -37,6 +39,10 @@ def fn_execute(ctx, function_name, arguments, method, auth_type, api_key, json_m
 
     if auth_type == "apikey" and not api_key:
         error_out("--api-key is required when --auth-type is apikey")
+        return
+
+    if dry_run:
+        dry_run_output(method, f"{config.get_crm_base()}/functions/{function_name}/actions/execute", parsed_args)
         return
 
     client = _client(ctx)
