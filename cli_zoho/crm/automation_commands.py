@@ -9,7 +9,7 @@ from cli_zoho.shared.output import render, error_out
 
 
 def _client(ctx) -> AutomationClient:
-    return AutomationClient(ctx.obj["auth"])
+    return AutomationClient(ctx.obj["auth_app3"])
 
 
 # --- Workflows ---

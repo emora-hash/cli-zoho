@@ -30,6 +30,7 @@ classifiers = [
 ]
 dependencies = [
     "click>=8.1",
+    "filelock>=3.12",
     "requests>=2.31",
 ]
 

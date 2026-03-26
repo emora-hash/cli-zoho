@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import requests
+from filelock import FileLock, Timeout
 
 from cli_zoho import config
 from cli_zoho.shared.errors import (
@@ -33,6 +34,13 @@ TOKEN_CACHE_DIR = Path.home() / ".cli-zoho"
 TOKEN_CACHE_FILE = TOKEN_CACHE_DIR / ".token_cache"
 TOKEN_EXPIRY_BUFFER = 60  # seconds before expiry to trigger refresh
 
+# File lock for OAuth token refresh serialization.
+# Zoho invalidates the old refresh token the moment it is used — if two processes
+# call the refresh endpoint simultaneously, the second one gets "invalid_code" and
+# loses its token permanently. Serializing through a file lock prevents that.
+OAUTH_LOCK_FILE = Path.home() / ".jma" / "oauth-refresh.lock"
+OAUTH_LOCK_TIMEOUT = 30  # seconds — Zoho token endpoint can be slow during maintenance
+
 MAX_RETRIES = 3
 INITIAL_BACKOFF = 1.0
 MAX_BACKOFF = 60.0
@@ -45,9 +53,35 @@ _rate_limit_retry_after: datetime | None = None
 
 
 class ZohoAuth:
-    """Manages OAuth2 access tokens via refresh token grant."""
+    """Manages OAuth2 access tokens via refresh token grant.
 
-    def __init__(self):
+    Supports multiple OAuth clients via credential overrides. Each client
+    gets its own token cache and lock file to prevent cross-contamination.
+
+    Args:
+        client_id: Override config.get_client_id().
+        client_secret: Override config.get_client_secret().
+        refresh_token: Override config.get_refresh_token().
+        profile: Label for cache/lock file isolation (e.g., "app3").
+    """
+
+    def __init__(
+        self,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        refresh_token: str | None = None,
+        profile: str | None = None,
+    ):
+        self._client_id = client_id
+        self._client_secret = client_secret
+        self._refresh_token = refresh_token
+        self._profile = profile
+
+        # Per-profile cache and lock paths
+        suffix = f"_{profile}" if profile else ""
+        self._cache_file = TOKEN_CACHE_DIR / f".token_cache{suffix}"
+        self._lock_file = OAUTH_LOCK_FILE.parent / f"oauth-refresh{suffix}.lock"
+
         self._access_token: str | None = None
         self._token_expiry: float = 0
         self._session = requests.Session()
@@ -57,15 +91,16 @@ class ZohoAuth:
 
     def _load_cached_token(self) -> None:
         """Load token from disk cache if still valid."""
-        if not TOKEN_CACHE_FILE.exists():
+        if not self._cache_file.exists():
             return
         try:
-            data = json.loads(TOKEN_CACHE_FILE.read_text())
+            data = json.loads(self._cache_file.read_text())
             expires_at = data.get("expires_at", 0)
             if time.time() < expires_at - TOKEN_EXPIRY_BUFFER:
                 self._access_token = data["access_token"]
                 self._token_expiry = expires_at
-                logger.debug("Loaded cached token (expires %s)", datetime.fromtimestamp(expires_at))
+                logger.debug("Loaded cached token [%s] (expires %s)",
+                             self._profile or "default", datetime.fromtimestamp(expires_at))
         except (json.JSONDecodeError, KeyError, OSError):
             pass  # corrupt cache — will refresh
 
@@ -73,37 +108,60 @@ class ZohoAuth:
         """Persist token to disk."""
         TOKEN_CACHE_DIR.mkdir(parents=True, exist_ok=True)
         expires_at = time.time() + expires_in
-        TOKEN_CACHE_FILE.write_text(json.dumps({
+        self._cache_file.write_text(json.dumps({
             "access_token": access_token,
             "expires_at": expires_at,
         }))
-        os.chmod(TOKEN_CACHE_FILE, 0o600)  # owner-only read/write
+        os.chmod(self._cache_file, 0o600)  # owner-only read/write
         self._token_expiry = expires_at
 
     # ─── Token Refresh ────────────────────────────────────────────────────
 
     def refresh(self) -> str:
-        """Force a token refresh and return the new access token."""
-        resp = self._session.post(
-            config.get_token_url(),
-            data={
-                "refresh_token": config.get_refresh_token(),
-                "client_id": config.get_client_id(),
-                "client_secret": config.get_client_secret(),
-                "grant_type": "refresh_token",
-            },
-        )
-        data = resp.json()
-        if resp.status_code != 200 or "access_token" not in data:
-            error = data.get("error", "unknown")
-            desc = data.get("error_description", data.get("message", ""))
-            raise AuthenticationError(f"Token refresh failed: {error} — {desc}", status_code=resp.status_code, code=error)
+        """Force a token refresh and return the new access token.
 
-        self._access_token = data["access_token"]
-        expires_in = data.get("expires_in", 3600)
-        self._save_cached_token(self._access_token, expires_in)
-        logger.info("Zoho access token refreshed (expires in %ds)", expires_in)
-        return self._access_token
+        Serialized via a file lock — Zoho invalidates the old refresh token on
+        use, so concurrent refreshes cause one process to receive invalid_code.
+        Other agents may still USE an existing valid token concurrently; only
+        the refresh network call itself is serialized.
+        """
+        self._lock_file.parent.mkdir(parents=True, exist_ok=True)
+        lock = FileLock(str(self._lock_file), timeout=OAUTH_LOCK_TIMEOUT)
+        try:
+            with lock:
+                # Re-check cache under the lock: another process may have
+                # refreshed while we were waiting, making our refresh redundant.
+                self._load_cached_token()
+                if self._access_token is not None and time.time() < self._token_expiry - TOKEN_EXPIRY_BUFFER:
+                    logger.debug("Token already refreshed by another process — reusing cached token")
+                    return self._access_token
+
+                resp = self._session.post(
+                    config.get_token_url(),
+                    data={
+                        "refresh_token": self._refresh_token or config.get_refresh_token(),
+                        "client_id": self._client_id or config.get_client_id(),
+                        "client_secret": self._client_secret or config.get_client_secret(),
+                        "grant_type": "refresh_token",
+                    },
+                )
+                data = resp.json()
+                if resp.status_code != 200 or "access_token" not in data:
+                    error = data.get("error", "unknown")
+                    desc = data.get("error_description", data.get("message", ""))
+                    raise AuthenticationError(f"Token refresh failed: {error} — {desc}", status_code=resp.status_code, code=error)
+
+                self._access_token = data["access_token"]
+                expires_in = data.get("expires_in", 3600)
+                self._save_cached_token(self._access_token, expires_in)
+                logger.info("Zoho access token refreshed (expires in %ds)", expires_in)
+                return self._access_token
+        except Timeout:
+            raise AuthenticationError(
+                "OAuth refresh lock timeout — another process is refreshing. Retry in 30 seconds.",
+                status_code=0,
+                code="lock_timeout",
+            )
 
     @property
     def access_token(self) -> str:

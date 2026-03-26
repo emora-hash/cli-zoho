@@ -6,6 +6,7 @@ import sys
 import click
 
 from cli_zoho import __version__
+from cli_zoho import config
 from cli_zoho.auth import ZohoAuth
 from cli_zoho.crm.commands import crm_group
 from cli_zoho.inventory.commands import inventory_group
@@ -25,6 +26,21 @@ def cli(ctx, debug, pretty):
         logging.basicConfig(level=logging.DEBUG, stream=sys.stderr,
                             format="%(name)s %(levelname)s: %(message)s")
     ctx.obj["auth"] = ZohoAuth()
+
+    # App #3 (CLI Bulk + Automation) — separate OAuth client for bulk, mass ops,
+    # workflow rules, functions, audit logs, recycle bin, Zia enrichment.
+    # Only initialized if credentials are configured; commands fall back to App #1.
+    app3_id = config.get_app3_client_id()
+    if app3_id:
+        ctx.obj["auth_app3"] = ZohoAuth(
+            client_id=app3_id,
+            client_secret=config.get_app3_client_secret(),
+            refresh_token=config.get_app3_refresh_token(),
+            profile="app3",
+        )
+    else:
+        ctx.obj["auth_app3"] = ctx.obj["auth"]  # fallback to App #1
+
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
 
@@ -81,7 +97,6 @@ def info_version():
 @click.pass_context
 def info_org(ctx, json_mode):
     """Show Zoho organization details."""
-    from cli_zoho import config
     auth = ctx.obj["auth"]
     resp = auth.request("GET", f"{config.get_inventory_base()}/organizations")
     orgs = resp.json().get("organizations", [])

@@ -75,6 +75,23 @@ def get_org_id() -> str:
     return _env("ZOHO_ORG_ID")
 
 
+# ─── App #3 (CLI Bulk + Automation) Credentials ───────────────────────────────
+# Separate OAuth client with bulk, mass ops, workflow, functions, admin scopes.
+# Falls back gracefully — returns None if not configured, letting auth.py decide.
+
+
+def get_app3_client_id() -> str | None:
+    return os.environ.get("ZOHO_APP3_CLIENT_ID")
+
+
+def get_app3_client_secret() -> str | None:
+    return os.environ.get("ZOHO_APP3_CLIENT_SECRET")
+
+
+def get_app3_refresh_token() -> str | None:
+    return os.environ.get("ZOHO_APP3_REFRESH_TOKEN")
+
+
 # ─── CRM Entity Definitions ─────────────────────────────────────────────────
 
 CRM_ENTITIES = {

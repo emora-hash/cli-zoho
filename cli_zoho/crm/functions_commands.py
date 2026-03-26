@@ -6,7 +6,7 @@ from cli_zoho.shared.output import render, error_out
 
 
 def _client(ctx) -> FunctionsClient:
-    return FunctionsClient(ctx.obj["auth"])
+    return FunctionsClient(ctx.obj["auth_app3"])
 
 
 @click.group("functions", short_help="CRM function execution")
