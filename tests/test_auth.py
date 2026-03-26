@@ -17,8 +17,11 @@ import cli_zoho.config as config_module
 
 class TestZohoAuth:
     def test_refresh_sets_token(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(auth_module, "TOKEN_CACHE_FILE", tmp_path / ".token_cache")
         auth = ZohoAuth()
+        auth._cache_file = tmp_path / ".token_cache"
+        auth._lock_file = tmp_path / "oauth-refresh.lock"
+        auth._access_token = None
+        auth._token_expiry = 0
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {"access_token": "new-token-123", "expires_in": 3600}
@@ -30,8 +33,11 @@ class TestZohoAuth:
         assert auth._access_token == "new-token-123"
 
     def test_refresh_raises_on_missing_token(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(auth_module, "TOKEN_CACHE_FILE", tmp_path / ".token_cache")
         auth = ZohoAuth()
+        auth._cache_file = tmp_path / ".token_cache"
+        auth._lock_file = tmp_path / "oauth-refresh.lock"
+        auth._access_token = None
+        auth._token_expiry = 0
         mock_resp = MagicMock()
         mock_resp.status_code = 400
         mock_resp.json.return_value = {"error": "invalid_client"}
@@ -93,9 +99,13 @@ class TestZohoAuth:
         mock_sleep.assert_called()
         assert result.status_code == 200
 
-    def test_missing_env_var_exits(self, monkeypatch):
+    def test_missing_env_var_exits(self, tmp_path, monkeypatch):
         monkeypatch.delenv("ZOHO_CLIENT_ID", raising=False)
         auth = ZohoAuth()
+        auth._cache_file = tmp_path / ".token_cache"
+        auth._lock_file = tmp_path / "oauth-refresh.lock"
+        auth._access_token = None
+        auth._token_expiry = 0
         with pytest.raises(SystemExit):
             auth.refresh()
 
