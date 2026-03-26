@@ -192,6 +192,10 @@ from cli_zoho.crm.settings_commands import (
     pipelines_group, variables_group, org_settings_group,
 )
 from cli_zoho.crm.functions_commands import functions_group
+from cli_zoho.crm.users_commands import users_group
+from cli_zoho.crm.composite_commands import composite_group
+from cli_zoho.crm.bulk_commands import bulk_group
+from cli_zoho.crm.mass_commands import mass_group
 
 crm_group.add_command(workflows_group)
 crm_group.add_command(blueprint_group)
@@ -204,5 +208,9 @@ crm_group.add_command(pipelines_group)
 crm_group.add_command(variables_group)
 crm_group.add_command(org_settings_group)
 crm_group.add_command(functions_group)
+crm_group.add_command(users_group)
+crm_group.add_command(composite_group)
+crm_group.add_command(bulk_group)
+crm_group.add_command(mass_group)
 
 
