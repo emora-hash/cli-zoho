@@ -160,6 +160,10 @@ def list_fields(ctx, entity, json_mode, quiet):
     render(fields_data, json_mode=json_mode, quiet=quiet)
 
 
+from cli_zoho.inventory.stock_commands import stock_group
+inventory_group.add_command(stock_group)
+
+
 @inventory_group.command("entities", short_help="List all Inventory entities")
 @click.option("--json", "json_mode", is_flag=True, help="JSON output")
 @click.option("--quiet", is_flag=True, help="Suppress non-data output")

@@ -191,4 +191,34 @@ INVENTORY_ENTITIES = {
         "get_key": "contactperson",
         "id_field": "contactperson_id",
     },
+    "invoices": {
+        "endpoint": "/invoices",
+        "list_key": "invoices",
+        "get_key": "invoice",
+        "id_field": "invoice_id",
+    },
+    "payments_received": {
+        "endpoint": "/customerpayments",
+        "list_key": "customerpayments",
+        "get_key": "payment",
+        "id_field": "payment_id",
+    },
+    "warehouses": {
+        "endpoint": "/warehouses",
+        "list_key": "warehouses",
+        "get_key": "warehouse",
+        "id_field": "warehouse_id",
+    },
+    "price_lists": {
+        "endpoint": "/pricebooks",
+        "list_key": "pricebooks",
+        "get_key": "pricebook",
+        "id_field": "pricebook_id",
+    },
+    "composite_items": {
+        "endpoint": "/compositeitems",
+        "list_key": "composite_items",
+        "get_key": "composite_item",
+        "id_field": "composite_item_id",
+    },
 }

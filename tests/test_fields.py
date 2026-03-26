@@ -67,5 +67,7 @@ class TestInventoryEntitiesDiscovery:
         expected = {"items", "item_groups", "packages", "shipments",
                     "purchase_orders", "purchase_receives", "bills",
                     "payments_made", "vendors", "sales_orders",
-                    "customers", "transfer_orders", "contact_persons"}
+                    "customers", "transfer_orders", "contact_persons",
+                    "invoices", "payments_received", "warehouses",
+                    "price_lists", "composite_items"}
         assert names == expected

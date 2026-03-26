@@ -196,6 +196,10 @@ from cli_zoho.crm.users_commands import users_group
 from cli_zoho.crm.composite_commands import composite_group
 from cli_zoho.crm.bulk_commands import bulk_group
 from cli_zoho.crm.mass_commands import mass_group
+from cli_zoho.crm.notes_commands import notes_group
+from cli_zoho.crm.tags_commands import tags_group
+from cli_zoho.crm.related_commands import related_group
+from cli_zoho.crm.trash_commands import trash_group
 
 crm_group.add_command(workflows_group)
 crm_group.add_command(blueprint_group)
@@ -212,5 +216,9 @@ crm_group.add_command(users_group)
 crm_group.add_command(composite_group)
 crm_group.add_command(bulk_group)
 crm_group.add_command(mass_group)
+crm_group.add_command(notes_group)
+crm_group.add_command(tags_group)
+crm_group.add_command(related_group)
+crm_group.add_command(trash_group)
 
 
