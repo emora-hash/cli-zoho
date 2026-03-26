@@ -12,7 +12,7 @@ Zoho has 3 official CLIs (`zet`, `zdk`, `@zohofinance/cli`) — none of them do 
 
 The official Python SDK (`zohocrm-python-sdk-8.0`) covers the full API surface but weighs ~50K LOC with hundreds of auto-generated model classes. Not practical for scripting or agent toolchains.
 
-**cli-zoho** is ~2K LOC, two runtime dependencies (`click` + `requests`), and covers 57 commands across both CRM and Inventory.
+**cli-zoho** is ~3K LOC, two runtime dependencies (`click` + `requests`), and covers 65+ commands across both CRM and Inventory.
 
 ## Quick Start
 
@@ -41,7 +41,7 @@ cli-zoho inv list items --all --json
 
 ## Features
 
-- **CRM v8 + Inventory v1** in one tool — 11 CRM modules, 13 Inventory entities
+- **CRM v8 + Inventory v1** in one tool — 20+ CRM subgroups, 18 Inventory entities
 - **COQL queries** with automatic v8 WHERE clause injection
 - **v8 field auto-resolution** — handles the required `fields` param transparently
 - **`--json` on every command** — structured output for agent pipelines
@@ -70,7 +70,18 @@ cli-zoho crm fields <module>        List fields + types
 cli-zoho crm modules                List all modules
 ```
 
-Plus automation (`workflows`, `blueprint`, `scoring`, `assignments`), metadata (`layouts`, `views`, `related-lists`), and settings (`pipelines`, `variables`, `org-settings`).
+Plus automation (`workflows`, `blueprint`, `scoring`, `assignments`), metadata (`layouts`, `views`, `related-lists`), settings (`pipelines`, `variables`, `org-settings`), and extended operations:
+
+```
+cli-zoho crm notes <module> <record_id>          List/create/delete notes
+cli-zoho crm tags <module>                       List/add/remove tags
+cli-zoho crm related <module> <id> <related>     List related records (line items, contacts)
+cli-zoho crm trash                               Recycle bin: list/restore/purge
+cli-zoho crm functions list|get|execute          Deluge function management
+cli-zoho crm users list|get|roles|profiles       User and role management
+cli-zoho crm bulk read|write                     Async bulk read/write (App #3)
+cli-zoho crm mass update|delete|convert          Mass operations (App #3)
+```
 
 ### Inventory
 
@@ -85,7 +96,15 @@ cli-zoho inv fields <entity>        List custom fields
 cli-zoho inv entities               List all entities
 ```
 
-Supported entities: items, item_groups, packages, shipments, purchase_orders, purchase_receives, bills, payments_made, vendors, sales_orders, customers, transfer_orders, contact_persons.
+Supported entities: items, item_groups, packages, shipments, purchase_orders, purchase_receives, bills, payments_made, vendors, sales_orders, customers, transfer_orders, contact_persons, invoices, payments_received, warehouses, price_lists, composite_items.
+
+Plus stock commands:
+
+```
+cli-zoho inv stock summary <item_id>   Stock levels by warehouse for an item
+cli-zoho inv stock warehouses          List all warehouses
+cli-zoho inv stock warehouse <id>      Get a single warehouse
+```
 
 ## Agent Integration
 
@@ -143,7 +162,7 @@ cli-zoho auth status
 | Rate limit + backoff | No | ? | ? | Yes |
 | Agent-native (--json) | No | Yes | Yes | Yes |
 | pip installable | Yes | No (npm) | No | Yes |
-| LOC | ~50K | ? | ? | **~2K** |
+| LOC | ~50K | ? | ? | **~3K** |
 
 ## Development
 
