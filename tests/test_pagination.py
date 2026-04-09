@@ -1,6 +1,6 @@
 """Tests for shared pagination utilities."""
 
-from cli_zoho.shared.pagination import paginate_all
+from cli_zoho.shared.zoho_cli_shared_pagination import paginate_all
 
 
 class TestPaginateAll:

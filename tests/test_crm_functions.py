@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
-from cli_zoho.crm.functions import FunctionsClient
+from cli_zoho.crm.zoho_cli_crm_functions import FunctionsClient
 
 
 def _mock_resp(payload, status_code=200):

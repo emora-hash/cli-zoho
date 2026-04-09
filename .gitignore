@@ -7,3 +7,5 @@ build/
 .venv/
 .cli-zoho/
 .env
+.aider*
+.claude/worktrees/

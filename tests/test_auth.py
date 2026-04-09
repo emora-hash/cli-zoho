@@ -6,13 +6,13 @@ import time
 import pytest
 from unittest.mock import MagicMock, patch, PropertyMock
 
-from cli_zoho.auth import ZohoAuth, TOKEN_CACHE_FILE, _rate_limit_retry_after
-from cli_zoho.shared.errors import (
+from cli_zoho.zoho_cli_auth import ZohoAuth, TOKEN_CACHE_FILE, _rate_limit_retry_after
+from cli_zoho.shared.zoho_cli_shared_errors import (
     AuthenticationError, RateLimitError, ValidationError,
     ResourceNotFoundError, ServerError, raise_for_zoho,
 )
-import cli_zoho.auth as auth_module
-import cli_zoho.config as config_module
+import cli_zoho.zoho_cli_auth as auth as auth_module
+import cli_zoho.zoho_cli_config as config as config_module
 
 
 class TestZohoAuth:

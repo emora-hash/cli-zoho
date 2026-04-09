@@ -20,7 +20,7 @@ import requests
 from filelock import FileLock, Timeout
 
 from cli_zoho import config
-from cli_zoho.shared.errors import (
+from cli_zoho.shared.zoho_cli_shared_errors import (
     AuthenticationError,
     RateLimitError,
     raise_for_zoho,

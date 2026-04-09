@@ -2,7 +2,7 @@
 
 import json
 from click.testing import CliRunner
-from cli_zoho.shared.output import render, _filter_fields
+from cli_zoho.shared.zoho_cli_shared_output import render, _filter_fields
 
 
 class TestFilterFields:

@@ -3,8 +3,8 @@
 import json
 from unittest.mock import MagicMock, patch
 
-from cli_zoho.auth import ZohoAuth
-from cli_zoho.main import cli
+from cli_zoho.zoho_cli_auth import ZohoAuth
+from cli_zoho.zoho_cli_main import cli
 
 
 class TestInventoryList:
